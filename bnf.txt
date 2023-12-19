@@ -257,8 +257,6 @@ The syntax of C in Backus-Naur Form
 <pointer> ::= * {<type-qualifier>}* {<pointer>}?
 
 <type-qualifier> ::= const
-                   | volatile
-
 
 <compound-statement> ::= { {<declaration>}* {<statement>}* }
 
