@@ -59,16 +59,9 @@ The syntax of C in Backus-Naur Form
                      | <shift-expression> >> <additive-expression>
 
 
-========================================================================================
 <additive-expression> ::= <multiplicative-expression>
                         | <additive-expression> + <multiplicative-expression>
                         | <additive-expression> - <multiplicative-expression>
-========================================================================================
-<additive-expression> ::= <multiplicative-expression> {<additive-expression-tail>}?
-<additive-expression-tail> ::= + <multiplicative-expression> {<additive-expression-tail>}?
-                             | - <multiplicative-expression> {<additive-expression-tail>}?
-========================================================================================
-
 
 
 <multiplicative-expression> ::= <cast-expression>
@@ -128,24 +121,22 @@ The syntax of C in Backus-Naur Form
 
 <external-declaration> ::= <function-definition>
                          | <declaration>
+                         | <typedef>
+
+<typedef> ::= ( <primitive-type-specifier> | <struct-or-union> <identifier> | enum <identifier> ) <declarator>
 
 <struct-or-union-specifier> ::= <struct-or-union> <identifier> { {<struct-declaration>}+ }
-                              | <struct-or-union> { {<struct-declaration>}+ }
-                              | <struct-or-union> <identifier>
 
 <struct-or-union> ::= struct
                     | union
 
-<struct-declaration> ::= {<specifier-qualifier>}* <struct-declarator-list> ;
-
-<struct-declarator-list> ::= <struct-declarator>
-                           | <struct-declarator-list> , <struct-declarator>
+<struct-declaration> ::= <specifier-qualifier> <struct-declarator> ;
 
 <struct-declarator> ::= <declarator>
                       | <declarator> : <constant-expression>
                       | : <constant-expression>
 
-<function-definition> ::= {<declaration-specifier>}* <declarator> {<declaration>}* <compound-statement>
+<function-definition> ::= <declaration-specifier> <declarator> <compound-statement>
 
 <declarator> ::= {<pointer>}? <direct-declarator>
 
@@ -155,14 +146,7 @@ The syntax of C in Backus-Naur Form
                       | <direct-declarator> [ {<constant-expression>}? ]
                       | <direct-declarator> ( <parameter-type-list> )
                       | <direct-declarator> ( {<identifier>}* )
-========================================================================================
-<direct-declarator> ::= <identifier> <direct-declarator-tail>
-<direct-declarator> ::= ( <declarator> ) <direct-declarator-tail>
-<direct-declarator-tail> ::= [ {<constant-expression>}? ] <direct-declarator-tail>
-<direct-declarator-tail> ::= ( <parameter-type-list> ) <direct-declarator-tail>
-<direct-declarator-tail> ::= ( {<identifier>}* ) <direct-declarator-tail>
-<direct-declarator-tail> ::= ε
-========================================================================================
+=======================================================================================
 <direct-declarator> ::= <identifier> {<direct-declarator-tail>}?
                       | ( <declarator> ) {<direct-declarator-tail>}?
 
@@ -172,35 +156,34 @@ The syntax of C in Backus-Naur Form
 ========================================================================================
 
 
-<declaration> ::=  {<declaration-specifier>}+ {<init-declarator>}* ;
+<declaration> ::= <declaration-specifier> <init-declarator> ;
 
-<declaration-specifier> ::= <storage-class-specifier>
-                          | <type-specifier>
-                          | const
+
+<declaration-specifier> ::= [ const ]? {<storage-class-specifier>}? <type-specifier>
 
 <storage-class-specifier> ::= auto
                             | register
                             | static
                             | extern
-                            | typedef
 
-<specifier-qualifier> ::= <type-specifier>
-                        | const
+<specifier-qualifier> ::= [ const ]? <type-specifier>
 
-<type-specifier> ::= void
-                   | char
-                   | short
-                   | int
-                   | long
-                   | float
-                   | double
-                   | signed
-                   | unsigned
+<primitive-type-specifier> ::= void
+                            | char
+                            | short
+                            | int
+                            | long
+                            | float
+                            | double
+                            | signed
+                            | unsigned
+
+<type-specifier> ::= <primitive-type-specifier> 
                    | <struct-or-union-specifier>
                    | <enum-specifier>
                    | <typedef-name>
 
-<type-name> ::= {<specifier-qualifier>}+ {<abstract-declarator>}?
+<type-name> ::= <specifier-qualifier> {<abstract-declarator>}?
 
 <parameter-type-list> ::= <parameter-list>
                         | <parameter-list> , ...
@@ -220,18 +203,6 @@ The syntax of C in Backus-Naur Form
 <direct-abstract-declarator> ::=  ( <abstract-declarator> )
                                | {<direct-abstract-declarator>}? [ {<constant-expression>}? ]
                                | {<direct-abstract-declarator>}? ( {<parameter-type-list>}? )
-===============================================================================================
-<direct-abstract-declarator> ::= ( <abstract-declarator> ) <direct-abstract-declarator-tail>
-<direct-abstract-declarator> ::= [ {<constant-expression>}? ] <direct-abstract-declarator-tail>
-<direct-abstract-declarator> ::= ( <parameter-type-list> ) <direct-abstract-declarator-tail>
-<direct-abstract-declarator-tail> ::= <direct-abstract-declarator> <direct-abstract-declarator-tail>
-<direct-abstract-declarator-tail> ::= ε
-===============================================================================================
-<direct-abstract-declarator> ::= ( <abstract-declarator> ) {<direct-abstract-declarator-tail>}?
-                               | [ {<constant-expression>}? ] {<direct-abstract-declarator-tail>}?
-                               | ( {<parameter-type-list>}? ) {<direct-abstract-declarator-tail>}?
-
-<direct-abstract-declarator-tail> ::= <direct-abstract-declarator> {<direct-abstract-declarator-tail>}?
 ===============================================================================================
 <direct-abstract-declarator> ::=  ( <abstract-declarator> ) {<direct-abstract-declarator-tail>}?
                                | [ {<constant-expression>}? ] {<direct-abstract-declarator-tail>}?
@@ -254,12 +225,10 @@ The syntax of C in Backus-Naur Form
                      | <initializer-list> , <initializer>
 
 
-<pointer> ::= * [ const ] {<pointer>}?
+<pointer> ::= * [ const ]? {<pointer>}?
 
 
 <enum-specifier> ::= enum <identifier> { <enumerator-list> }
-                   | enum { <enumerator-list> }
-                   | enum <identifier>
 
 <enumerator-list> ::= <enumerator>
                     | <enumerator-list> , <enumerator>
@@ -281,7 +250,7 @@ The syntax of C in Backus-Naur Form
 
 <expression-statement> ::= {<expression>}? ;
 
-<compound-statement> ::= { {<declaration>}* {<statement>}* }
+<compound-statement> ::= { {<declaration>}* {<typedef>}* {<statement>}* }
 
 <selection-statement> ::= if ( <expression> ) <statement>
                         | if ( <expression> ) <statement> else <statement>
@@ -290,6 +259,7 @@ The syntax of C in Backus-Naur Form
 <iteration-statement> ::= while ( <expression> ) <statement>
                         | do <statement> while ( <expression> ) ;
                         | for ( {<expression>}? ; {<expression>}? ; {<expression>}? ) <statement>
+                        | for ( <declaration> {<expression>}? ; {<expression>}? ) <statement>
 
 <jump-statement> ::= goto <identifier> ;
                    | continue ;
