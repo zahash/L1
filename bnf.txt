@@ -176,7 +176,7 @@ The syntax of C in Backus-Naur Form
 
 <declaration-specifier> ::= <storage-class-specifier>
                           | <type-specifier>
-                          | <type-qualifier>
+                          | const
 
 <storage-class-specifier> ::= auto
                             | register
@@ -185,7 +185,7 @@ The syntax of C in Backus-Naur Form
                             | typedef
 
 <specifier-qualifier> ::= <type-specifier>
-                        | <type-qualifier>
+                        | const
 
 <type-specifier> ::= void
                    | char
@@ -254,11 +254,8 @@ The syntax of C in Backus-Naur Form
                      | <initializer-list> , <initializer>
 
 
-<pointer> ::= * {<type-qualifier>}* {<pointer>}?
+<pointer> ::= * [ const ] {<pointer>}?
 
-<type-qualifier> ::= const
-
-<compound-statement> ::= { {<declaration>}* {<statement>}* }
 
 <enum-specifier> ::= enum <identifier> { <enumerator-list> }
                    | enum { <enumerator-list> }
@@ -283,6 +280,8 @@ The syntax of C in Backus-Naur Form
                       | default : <statement>
 
 <expression-statement> ::= {<expression>}? ;
+
+<compound-statement> ::= { {<declaration>}* {<statement>}* }
 
 <selection-statement> ::= if ( <expression> ) <statement>
                         | if ( <expression> ) <statement> else <statement>
