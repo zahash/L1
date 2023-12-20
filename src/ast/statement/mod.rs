@@ -2,16 +2,15 @@ pub mod compound;
 pub mod expression;
 pub mod iteration;
 pub mod jump;
-pub mod labeled;
 pub mod selection;
 
 use self::{
     compound::parse_compound_stmt, expression::parse_expr_stmt, iteration::parse_iteration_stmt,
-    jump::parse_jump_stmt, labeled::parse_labeled_stmt, selection::parse_selection_stmt,
+    jump::parse_jump_stmt, selection::parse_selection_stmt,
 };
 use super::ParseContext;
 use crate::{
-    ast::{CompoundStmt, Expr, IterationStmt, JumpStmt, LabeledStmt, ParseError, SelectionStmt},
+    ast::{CompoundStmt, Expr, IterationStmt, JumpStmt, ParseError, SelectionStmt},
     lex::Token,
 };
 use chainchomp::ctx_sensitive::combine_parsers;
@@ -20,7 +19,6 @@ use std::fmt::{self, Display, Formatter};
 #[derive(Debug, PartialEq, Clone)]
 pub enum Stmt<'text> {
     EmptyStmt,
-    Labeled(LabeledStmt<'text>),
     Expr(Expr<'text>),
     Compound(CompoundStmt<'text>),
     Selection(SelectionStmt<'text>),
@@ -38,7 +36,6 @@ pub fn parse_stmt<'text>(
         pos,
         ctx,
         &[
-            &parse_labeled_stmt,
             &parse_empty_stmt,
             &parse_expr_stmt,
             &parse_compound_stmt,
@@ -67,18 +64,11 @@ impl<'text> Display for Stmt<'text> {
         match self {
             Stmt::EmptyStmt => write!(f, ";"),
             Stmt::Expr(stmt) => write!(f, "{};", stmt),
-            Stmt::Labeled(stmt) => write!(f, "{}", stmt),
             Stmt::Compound(stmt) => write!(f, "{}", stmt),
             Stmt::Selection(stmt) => write!(f, "{}", stmt),
             Stmt::Iteration(stmt) => write!(f, "{}", stmt),
             Stmt::Jump(stmt) => write!(f, "{}", stmt),
         }
-    }
-}
-
-impl<'text> From<LabeledStmt<'text>> for Stmt<'text> {
-    fn from(value: LabeledStmt<'text>) -> Self {
-        Stmt::Labeled(value)
     }
 }
 

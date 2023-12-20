@@ -56,7 +56,6 @@ pub use r#enum::EnumSpecifier;
 pub use statement::compound::{BlockItem, CompoundStmt};
 pub use statement::iteration::IterationStmt;
 pub use statement::jump::JumpStmt;
-pub use statement::labeled::LabeledStmt;
 pub use statement::selection::SelectionStmt;
 pub use statement::Stmt;
 
