@@ -1,13 +1,10 @@
-use super::{type_qualifier::parse_type_qualifier, ParseContext};
-use crate::{
-    ast::{ParseError, TypeQualifier},
-    lex::Token,
-};
+use super::ParseContext;
+use crate::{ast::ParseError, lex::Token};
 use std::fmt::{self, Display, Formatter};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Pointer {
-    pub qualifiers: Vec<TypeQualifier>,
+    pub is_const: bool,
     pub next: Option<Box<Pointer>>,
 }
 
@@ -16,7 +13,7 @@ pub struct PointerIter<'pointer> {
 }
 
 impl<'pointer> IntoIterator for &'pointer Pointer {
-    type Item = &'pointer [TypeQualifier];
+    type Item = bool;
     type IntoIter = PointerIter<'pointer>;
 
     fn into_iter(self) -> Self::IntoIter {
@@ -27,13 +24,13 @@ impl<'pointer> IntoIterator for &'pointer Pointer {
 }
 
 impl<'pointer> Iterator for PointerIter<'pointer> {
-    type Item = &'pointer [TypeQualifier];
+    type Item = bool;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(pointer) = &self.pointer {
-            let qualifiers = pointer.qualifiers.as_slice();
+            let is_const = pointer.is_const;
             self.pointer = pointer.next.as_ref().map(|boxed| boxed.as_ref());
-            return Some(qualifiers);
+            return Some(is_const);
         }
 
         None
@@ -42,32 +39,27 @@ impl<'pointer> Iterator for PointerIter<'pointer> {
 
 pub fn parse_pointer<'text>(
     tokens: &[Token<'text>],
-    mut pos: usize,
+    pos: usize,
     ctx: &mut ParseContext<'text>,
 ) -> Result<(Pointer, usize), ParseError> {
     let Some(Token::Symbol("*")) = tokens.get(pos) else {
         return Err(ParseError::SyntaxError(pos, "parse_pointer: expected `*`"));
     };
-    pos += 1;
 
     let mut pointer = Pointer {
-        qualifiers: vec![],
+        is_const: false,
         next: None,
     };
 
-    loop {
-        match parse_type_qualifier(tokens, pos, ctx) {
-            Err(_) => break,
-            Ok((qualifier, next_pos)) => {
-                pointer.qualifiers.push(qualifier);
-                pos = next_pos;
-            }
-        }
-    }
+    let (is_const, pos) = match tokens.get(pos + 1) {
+        Some(Token::Keyword("const")) => (true, pos + 2),
+        _ => (false, pos + 1),
+    };
+
+    pointer.is_const = is_const;
 
     match parse_pointer(tokens, pos, ctx) {
-        Ok((next_pointer, next_pos)) => {
-            pos = next_pos;
+        Ok((next_pointer, pos)) => {
             pointer.next = Some(Box::new(next_pointer));
             Ok((pointer, pos))
         }
@@ -78,8 +70,8 @@ pub fn parse_pointer<'text>(
 impl Display for Pointer {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(f, "*")?;
-        for qualifier in &self.qualifiers {
-            write!(f, "{} ", qualifier)?;
+        if self.is_const {
+            write!(f, "const ")?;
         }
 
         if let Some(next_pointer) = &self.next {
@@ -106,34 +98,16 @@ mod tests {
         check!(parse_pointer, &mut ctx, "**");
         check!(parse_pointer, &mut ctx, "***");
         check!(parse_pointer, &mut ctx, "*const ");
+        check!(parse_pointer, &mut ctx, "*const *const ");
         check!(
             parse_pointer,
             &mut ctx,
-            "*const volatile const volatile volatile const "
-        );
-        check!(
-            parse_pointer,
-            &mut ctx,
-            "*volatile const volatile *const const volatile "
-        );
-        check!(
-            parse_pointer,
-            &mut ctx,
-            "**volatile *******const ***const volatile ******"
+            "**const *******const ***const ******"
         );
 
-        let pointer = ast!(parse_pointer, &mut ctx, "* *const volatile *volatile * *");
-        let qualifiers: Vec<Vec<TypeQualifier>> = pointer.into_iter().map(|q| q.into()).collect();
+        let pointer = ast!(parse_pointer, &mut ctx, "* *const *const * *");
+        let qualifiers: Vec<bool> = pointer.into_iter().collect();
 
-        assert_eq!(
-            qualifiers,
-            vec![
-                vec![],
-                vec![TypeQualifier::Const, TypeQualifier::Volatile],
-                vec![TypeQualifier::Volatile],
-                vec![],
-                vec![],
-            ]
-        );
+        assert_eq!(qualifiers, vec![false, true, true, false, false,]);
     }
 }
