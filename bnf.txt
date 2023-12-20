@@ -125,7 +125,7 @@ The syntax of C in Backus-Naur Form
 
 <typedef> ::= ( <primitive-type-specifier> | <struct-or-union> <identifier> | enum <identifier> ) <declarator>
 
-<struct-or-union-specifier> ::= <struct-or-union> <identifier> { {<struct-declaration>}+ }
+<struct-or-union-specifier> ::= <struct-or-union> <identifier> { {<struct-declaration>}* }
 
 <struct-or-union> ::= struct
                     | union
@@ -191,9 +191,9 @@ The syntax of C in Backus-Naur Form
 <parameter-list> ::= <parameter-declaration>
                    | <parameter-list> , <parameter-declaration>
 
-<parameter-declaration> ::= {<declaration-specifier>}+ <declarator>
-                          | {<declaration-specifier>}+ <abstract-declarator>
-                          | {<declaration-specifier>}+
+<parameter-declaration> ::= <declaration-specifier> <declarator>
+                          | <declaration-specifier> <abstract-declarator>
+                          | <declaration-specifier>
 
 <abstract-declarator> ::= <pointer>
                         | <pointer> <direct-abstract-declarator>
